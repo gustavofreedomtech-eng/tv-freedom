@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Painel Geral Freedom · TV</title>
+<style>
+  :root{
+    --bg:#0a0c12; --card:#12151f; --line:#232838; --txt:#f2f4f8; --muted:#8b93a7; --faint:#5d6578;
+    --pink:#e84b8a; --pink2:#ff7fb0; --blue:#4f7cff; --ideal:#c9ced9; --ok:#1fbf8f; --warn:#f0a53a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--txt);font-family:"Segoe UI",system-ui,Roboto,sans-serif;overflow:hidden}
+  body.sem-cursor,body.sem-cursor *{cursor:none!important}
+
+  /* Palco fixo 1920x1080: a tela inteira é ampliada/reduzida junto (igual em TV, PC ou celular deitado) */
+  #palco{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;
+    background:radial-gradient(1100px 620px at 50% 20%, rgba(232,75,138,.12) 0%, transparent 65%),var(--bg)}
+  .tela{height:100%;display:flex;flex-direction:column;align-items:center;padding:30px 60px 18px;gap:20px}
+
+  .topo{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .logo{height:100px}
+  .periodo{font-size:17px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+
+  /* Faturamento x meta */
+  .hero{width:1400px;max-width:100%;text-align:center}
+  .hero .lbl{font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .hero .val{font-size:124px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.02em;white-space:nowrap}
+  .hero .val .rs{font-size:.42em;color:var(--pink);margin-right:.15em;vertical-align:.6em;font-weight:700}
+  .meta-linha{display:flex;justify-content:space-between;align-items:baseline;margin:12px 2px 10px;font-size:23px;color:var(--muted)}
+  .meta-linha b{color:var(--txt);font-variant-numeric:tabular-nums}
+  .pct{font-size:42px;font-weight:800;color:var(--txt)}
+  .barra{position:relative;height:28px;background:#1b2030;border-radius:999px}
+  .barra .fill{position:absolute;inset:0 auto 0 0;border-radius:999px;background:linear-gradient(90deg,#b8336b,var(--pink) 60%,var(--pink2));transition:width 1.2s ease}
+  .barra .ideal{position:absolute;top:-7px;bottom:-7px;width:4px;background:var(--ideal);border-radius:2px}
+  .barra .ideal span{position:absolute;top:calc(100% + 5px);left:50%;transform:translateX(-50%);font-size:16px;color:var(--muted);white-space:nowrap}
+  .dicas{display:flex;justify-content:center;gap:36px;margin-top:38px;font-size:21px;color:var(--muted);flex-wrap:wrap}
+  .dicas b{color:var(--txt);font-variant-numeric:tabular-nums}
+
+  /* Linha de baixo: 3 cartões */
+  .grade{width:100%;flex:1;min-height:0;display:grid;grid-template-columns:0.85fr 1.3fr 1.25fr;gap:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 28px;display:flex;flex-direction:column;min-height:0}
+  .card h3{font-size:19px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+  .card h3 b{color:var(--txt);letter-spacing:0}
+
+  /* Positivação: anel */
+  .anel{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+  .anel svg{height:100%;max-height:300px;width:auto;overflow:visible}
+  .anel .centro{position:absolute;text-align:center}
+  .anel .centro .n{font-size:54px;font-weight:800;font-variant-numeric:tabular-nums}
+  .anel .centro .d{font-size:17px;color:var(--muted)}
+  .mini{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .mini div{background:#0e111a;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+  .mini span{display:block;font-size:15px;color:var(--muted)}
+  .mini b{font-size:23px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  /* Vendedores (todos, trocando de página sozinho) */
+  .vend{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly;gap:8px;overflow:hidden;transition:opacity .35s ease}
+  .vend.saindo{opacity:0}
+  .v .nome{display:flex;justify-content:space-between;font-size:21px;margin-bottom:6px;gap:12px}
+  .v .nome span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .v .nome b{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .v .nome i{font-style:normal;color:var(--muted);font-size:.85em;margin-left:8px}
+  .v .nome .pos{display:inline-block;width:2.4em;color:var(--muted)}
+  .v .trilho{position:relative;height:12px;background:#1b2030;border-radius:999px}
+  .v .trilho .fillv{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--blue)}
+  .v .trilho .idv{position:absolute;top:-4px;bottom:-4px;width:3px;background:var(--ideal);border-radius:2px}
+  .v .info{display:flex;justify-content:space-between;gap:10px;margin-top:6px;font-size:16px;color:var(--muted);white-space:nowrap}
+  .v .info b{color:var(--txt);font-variant-numeric:tabular-nums;font-weight:600}
+  .v .ok,.v .info b.ok{color:var(--ok)} .v .abaixo,.v .info b.abaixo{color:var(--warn)}
+  .dots{display:inline-flex;gap:6px;margin-left:12px;vertical-align:middle} .dots i{width:8px;height:8px;border-radius:50%;background:var(--line)} .dots i.on{background:var(--pink)}
+
+  /* Evolução acumulada */
+  .graf{flex:1;min-height:0;position:relative}
+  .graf svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .legenda{display:flex;gap:20px;font-size:16px;color:var(--muted);margin-top:10px}
+  .legenda i{display:inline-block;width:22px;height:0;border-top:3px solid;vertical-align:middle;margin-right:7px}
+
+  .rodape{font-size:14px;color:var(--faint);letter-spacing:.04em}
+  .erro{color:#ff7b7b}
+  .btn-cheia{position:fixed;right:8px;bottom:4px;z-index:70;background:transparent;color:#8b93a7;border:1px solid #232838;border-radius:7px;padding:3px 8px;font:600 11px "Segoe UI",system-ui,Roboto,sans-serif;cursor:pointer;opacity:.6}
+  .btn-cheia:hover,.btn-cheia:focus-visible{opacity:1;color:#f2f4f8}
+  .btn-cheia[hidden]{display:none}
+  @media (prefers-reduced-motion: reduce){.vend{transition:none}}
+
+  /* Celular em pé: pede para deitar */
+  #girar{position:fixed;inset:0;z-index:50;background:var(--bg);color:var(--txt);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;font:600 18px "Segoe UI",system-ui,sans-serif}
+  #girar .ic{font-size:54px;animation:gira 2s ease-in-out infinite}
+  #girar small{color:var(--muted);font-weight:400;font-size:14px}
+  @keyframes gira{0%,20%{transform:rotate(0)}50%,70%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+  @media (orientation:portrait) and (max-width:900px){#girar{display:flex}}
+</style>
+</head>
+<body>
+<button class="btn-cheia" id="btnCheia" type="button" hidden>⛶ Tela cheia</button>
+<div id="girar"><div class="ic">📱</div>Gire o celular para deitado<small>O painel ocupa a tela inteira na horizontal</small></div>
+<div id="palco">
+<div class="tela">
+  <div class="topo">
+    <img class="logo" src="logo.png" alt="Grupo Freedom">
+    <div class="periodo" id="periodo">—</div>
+  </div>
+
+  <div class="hero">
+    <div class="lbl" id="heroLbl">Faturamento do mês</div>
+    <div class="val" id="fat">—</div>
+    <div class="meta-linha">
+      <span>Meta <b id="meta">—</b></span>
+      <span class="pct" id="pct">—</span>
+      <span>Falta <b id="falta">—</b></span>
+    </div>
+    <div class="barra"><div class="fill" id="fill" style="width:0"></div><div class="ideal" id="ideal"><span id="idealLbl"></span></div></div>
+    <div class="dicas" id="dicas"></div>
+  </div>
+
+  <div class="grade">
+    <div class="card">
+      <h3>Positivação <b id="posPct">—</b></h3>
+      <div class="anel">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#1b2030" stroke-width="12"/>
+          <circle id="arco" cx="60" cy="60" r="50" fill="none" stroke="var(--ok)" stroke-width="12" stroke-linecap="round"
+                  transform="rotate(-90 60 60)" stroke-dasharray="0 314.16" style="transition:stroke-dasharray 1.2s ease"/>
+        </svg>
+        <div class="centro"><div class="n" id="posN">—</div><div class="d" id="posD">—</div></div>
+      </div>
+      <div class="mini">
+        <div><span>Pedidos</span><b id="ped">—</b></div>
+        <div><span>Ticket médio</span><b id="tkt">—</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Vendedores <b id="vendTot"></b></h3>
+      <div class="vend" id="vend"></div>
+    </div>
+
+    <div class="card">
+      <h3>Evolução do mês <b id="proj"></b></h3>
+      <div class="graf" id="graf"></div>
+      <div class="legenda">
+        <span><i style="border-color:var(--pink)"></i>Realizado</span>
+        <span><i style="border-color:var(--ideal);border-top-style:dashed"></i>Ritmo para a meta</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rodape" id="rodape">carregando…</div>
+</div>
+</div>
+
+<script src="config.js"></script>
+<script src="login.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const brl = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const brlK = v => { v=Number(v); if(!v) return 'R$ 0'; return v>=1e6 ? 'R$ '+(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi' : 'R$ '+Math.round(v/1e3).toLocaleString('pt-BR')+' mil'; };
+  const pctF = v => Number(v).toLocaleString('pt-BR',{maximumFractionDigits:1}) + '%';
+  const dataBR = s => { const [y,m,d] = String(s).slice(0,10).split('-'); return `${d}/${m}/${y}`; };
+  const esc = t => String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  let DADOS = null;
+  // Donos e supervisores não aparecem na lista de vendedores (continuam somados no total, que vem do site)
+  const FORA_DA_LISTA = [];   // nomes extras para tirar da lista (Anthony e Lucas já saem por serem DIRETORIA)
+  const norm = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^SUPERVISOR\s*-\s*/i, '').trim().toUpperCase();
+  const naLista = v => !FORA_DA_LISTA.includes(norm(v.nome)) && !/^\s*(SUPERVISOR|SUPERVISORA|SUP|DIRETORIA|DIRETOR|DIRETORA)\b/i.test(String(v.nome));
+
+  function grafico(d){
+    const el = $('graf'), W = el.clientWidth, H = el.clientHeight;
+    if (!W || !H || !d.diario.length) { el.innerHTML = ''; return; }
+    const pad = {l:70, r:12, t:12, b:28};
+    const n = d.diario.length, meta = d.meta_faturamento;
+    const max = Math.max(meta, ...d.diario.map(r => r[2])) * 1.05 || 1;
+    const x = i => pad.l + (W-pad.l-pad.r) * (n===1 ? 0 : i/(n-1));
+    const y = v => pad.t + (H-pad.t-pad.b) * (1 - v/max);
+    const hoje = d.periodo.hoje || new Date().toISOString().slice(0,10);
+    const real = d.diario.map((r,i)=>[i,r]).filter(([i,r]) => r[0] <= hoje);
+    const ideal = d.diario.map((r,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(r[3]).toFixed(1)}`).join('');
+    const linha = real.map(([i,r],k)=>`${k?'L':'M'}${x(i).toFixed(1)},${y(r[2]).toFixed(1)}`).join('');
+    const ult = real.length ? real[real.length-1] : null;
+    const area = ult ? linha + `L${x(ult[0]).toFixed(1)},${y(0)}L${x(real[0][0]).toFixed(1)},${y(0)}Z` : '';
+    let grid = '';
+    [0, meta/2, meta].forEach(v => {
+      grid += `<line x1="${pad.l}" x2="${W-pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="#232838" stroke-width="1"/>`+
+              `<text x="${pad.l-10}" y="${y(v)+5}" text-anchor="end" fill="#8b93a7" font-size="15">${brlK(v)}</text>`;
+    });
+    const ticks = [0, Math.floor((n-1)/2), n-1].map(i =>
+      `<text x="${x(i)}" y="${H-4}" text-anchor="middle" fill="#8b93a7" font-size="15">${d.diario[i][0].slice(8)}/${d.diario[i][0].slice(5,7)}</text>`).join('');
+    const ponto = ult ? `<circle cx="${x(ult[0])}" cy="${y(ult[1][2])}" r="7" fill="#e84b8a" stroke="#12151f" stroke-width="3"/>` : '';
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}">
+      <defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e84b8a" stop-opacity=".35"/><stop offset="1" stop-color="#e84b8a" stop-opacity="0"/></linearGradient></defs>
+      ${grid}${ticks}
+      <text x="${W-pad.r}" y="${y(meta)-8}" text-anchor="end" fill="#c9ced9" font-size="15">Meta</text>
+      <path d="${ideal}" fill="none" stroke="#c9ced9" stroke-width="2.5" stroke-dasharray="6 6" opacity=".7"/>
+      <path d="${area}" fill="url(#ga)"/>
+      <path d="${linha}" fill="none" stroke="#e84b8a" stroke-width="3.5" stroke-linejoin="round"/>
+      ${ponto}</svg>`;
+  }
+
+  function cabecalho(){
+    const d = DADOS; if (!d) return;
+    const agora = new Date();
+    $('periodo').textContent = `${d.gestor ? d.gestor + ' · ' : ''}${dataBR(d.periodo.inicio)} a ${dataBR(d.periodo.fim)} · ${SEMANA[agora.getDay()]}, ${agora.getDate()} de ${MESES[agora.getMonth()]}`;
+  }
+
+  function render(){
+    const d = DADOS;
+    const m = +d.periodo.inicio.split('-')[1];
+    cabecalho();
+    $('heroLbl').textContent = `Faturamento de ${MESES[m-1]}`;
+    const num = Number(d.faturamento).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    $('fat').innerHTML = `<span class="rs">R$</span>${num}`;
+    $('meta').textContent = brl(d.meta_faturamento);
+    const p = d.meta_faturamento ? d.faturamento / d.meta_faturamento * 100 : 0;
+    $('pct').textContent = pctF(p);
+    const falta = Math.max(0, d.meta_faturamento - d.faturamento);
+    $('falta').textContent = falta > 0 ? brl(falta) : 'meta batida! 🎉';
+    $('fill').style.width = Math.min(100, p) + '%';
+    $('ideal').style.left = `calc(${Math.min(100, d.progresso_ideal)}% - 2px)`;
+    $('idealLbl').textContent = `ideal hoje ${pctF(d.progresso_ideal)}`;
+    const du = d.dias_uteis;
+    const porDia = du.restantes > 0 ? falta / du.restantes : 0;
+    $('dicas').innerHTML =
+      `<span>Dias úteis <b>${du.decorridos}/${du.total}</b> · restam <b>${du.restantes}</b></span>` +
+      (falta > 0 && du.restantes > 0 ? `<span>Precisa <b>${brl(porDia)}</b> por dia útil</span>` : '') +
+      (d.projecao ? `<span>Projeção <b>${brl(d.projecao)}</b></span>` : '');
+
+    const pp = d.meta_positivacao ? d.positivados / d.meta_positivacao * 100 : 0;
+    $('posPct').textContent = pctF(pp);
+    $('arco').setAttribute('stroke-dasharray', `${(Math.min(100,pp)/100*314.16).toFixed(1)} 314.16`);
+    $('posN').textContent = d.positivados.toLocaleString('pt-BR');
+    $('posD').textContent = `de ${d.meta_positivacao.toLocaleString('pt-BR')} clientes`;
+    $('ped').textContent = d.pedidos.toLocaleString('pt-BR');
+    $('tkt').textContent = brl(d.ticket_medio);
+
+    const ideal = du.total ? du.decorridos / du.total : d.progresso_ideal / 100;
+    VEND = { lista: d.vendedores.filter(naLista).sort((a,b)=>b.valor-a.valor), ideal, progresso: d.progresso_ideal };
+    mostrarVend(false);
+    grafico(d);
+    const h = new Date(d.atualizado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    $('rodape').textContent = `Última atualização: ${h} · atualiza sozinho a cada 1 minuto`;
+  }
+
+  // ----- vendedores em páginas (giram sozinhas a cada 8 segundos) -----
+  let VEND = null, PAG = 0;
+  function porPagina(){
+    const h = $('vend').clientHeight;
+    return Math.max(4, Math.floor((h + 8) / 78));   // cada vendedor ocupa ~78 px; tela mais alta = mais vendedores
+  }
+  function mostrarVend(animar){
+    if (!VEND) return;
+    const { lista, ideal } = VEND, POR_PAG = porPagina();
+    const pags = Math.max(1, Math.ceil(lista.length / POR_PAG));
+    if (PAG >= pags) PAG = 0;
+    const ini = PAG * POR_PAG, vs = lista.slice(ini, ini + POR_PAG);
+    $('vendTot').innerHTML = lista.length > POR_PAG
+      ? `${ini + 1}–${ini + vs.length} de ${lista.length} <span class="dots">${Array.from({length:pags},(_,k)=>`<i class="${k===PAG?'on':''}"></i>`).join('')}</span>`
+      : `${lista.length}`;
+    const el = $('vend');
+    const html = vs.map((v,j) => { const i = ini + j;
+      if (!v.meta) {
+        return `<div class="v"><div class="nome"><span><span class="pos">${i+1}º</span>${esc(v.nome)}</span><b>${brl(v.valor)}</b></div>
+          <div class="info"><span>sem meta cadastrada</span></div></div>`;
+      }
+      const pv = v.valor / v.meta * 100, idealV = v.meta * ideal, falta = Math.max(0, v.meta - v.valor), acima = v.valor >= idealV;
+      return `<div class="v">
+        <div class="nome"><span><span class="pos">${i+1}º</span>${esc(v.nome)}</span><b>${brl(v.valor)}<i>${pctF(pv)}</i></b></div>
+        <div class="trilho"><div class="fillv" style="width:${Math.min(100,Math.max(1.5,pv))}%;background:${acima?'var(--blue)':'var(--warn)'}"></div>
+          <div class="idv" style="left:calc(${Math.min(100,VEND.progresso)}% - 1.5px)"></div></div>
+        <div class="info"><span>Meta <b>${brl(v.meta)}</b></span><span>Ideal hoje <b class="${acima?'ok':'abaixo'}">${brl(idealV)}</b></span><span>${falta>0?`Falta <b>${brl(falta)}</b>`:'<b class="ok">meta batida!</b>'}</span></div>
+      </div>`;
+    }).join('');
+    if (animar) { el.classList.add('saindo'); setTimeout(() => { el.innerHTML = html; el.classList.remove('saindo'); }, 350); }
+    else el.innerHTML = html;
+  }
+  setInterval(() => { if (VEND && VEND.lista.length > porPagina()) { PAG++; mostrarVend(true); } }, 8000);
+  setInterval(cabecalho, 60 * 1000);
+
+  // ----- busca na função do Supabase (com o login guardado nesta TV) -----
+  async function carregar(){
+    try {
+      DADOS = await TV.buscar('geral', carregar);
+      render();
+      if (DADOS.aviso) $('rodape').innerHTML += ' · <span class="erro">' + esc(DADOS.aviso) + '</span>';
+    } catch (e) {
+      if (/faça o login/.test(e.message)) { $('rodape').textContent = 'Faça o login para ver o painel'; return; }
+      $('rodape').innerHTML = (DADOS ? esc($('rodape').textContent.split(' · ')[0]) + ' · ' : '') + '<span class="erro">Não consegui atualizar: ' + esc(e.message) + '</span>';
+    }
+  }
+
+  // Encaixa o palco na tela inteira: base 1920x1080, o espaço que sobrar vai para os cartões de baixo
+  function encaixar(){
+    const W = innerWidth, H = innerHeight, k = Math.min(W / 1920, H / 1080);
+    const p = $('palco');
+    p.style.width = (W / k) + 'px'; p.style.height = (H / k) + 'px';
+    p.style.transform = `scale(${k})`;
+  }
+  window.addEventListener('resize', () => { encaixar(); if (DADOS) { grafico(DADOS); mostrarVend(false); } });
+
+  // Botão "Tela cheia" (some sozinho quando já está em tela cheia) e cursor escondido depois de 3 s
+  (function(){
+    const b = $('btnCheia'), el = document.documentElement;
+    const pode = true;
+    const cheia = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const mostrar = () => { b.hidden = !pode || cheia(); };
+    b.addEventListener('click', () => {
+      const f = el.requestFullscreen || el.webkitRequestFullscreen;
+      const avisar = () => { b.textContent = 'use o menu do navegador › tela cheia'; setTimeout(() => { b.textContent = '⛶ Tela cheia'; }, 6000); };
+      if (!f) return avisar();
+      try { const r = f.call(el); if (r && r.catch) r.catch(avisar); } catch (e) { avisar(); }
+    });
+    document.addEventListener('fullscreenchange', mostrar); document.addEventListener('webkitfullscreenchange', mostrar);
+    window.addEventListener('resize', mostrar); mostrar();
+    document.addEventListener('fullscreenchange', () => { try { if (document.fullscreenElement) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} });
+    let t; const acorda = () => { document.body.classList.remove('sem-cursor'); clearTimeout(t); t = setTimeout(() => document.body.classList.add('sem-cursor'), 3000); };
+    ['mousemove', 'pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, acorda)); acorda();
+  })();
+
+  encaixar();
+  carregar();
+  setInterval(carregar, 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) carregar(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Vendas do mês · Freedom</title>
+<style>
+  /* Layout: cabeçalho, faixa com o total da equipe e tabela com todos os vendedores (páginas giram sozinhas) */
+  :root{
+    --bg:#0a0c12; --card:#12151f; --card2:#0e111a; --line:#232838; --txt:#f2f4f8; --muted:#8b93a7; --faint:#5d6578;
+    --pink:#e84b8a; --pink2:#ff7fb0; --blue:#4f7cff; --ideal:#c9ced9; --ok:#1fbf8f; --warn:#f0a53a; --track:#1b2030;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI",system-ui,sans-serif;overflow:hidden}
+  body{background:radial-gradient(1100px 520px at 50% 0%, rgba(232,75,138,.13) 0%, transparent 65%),var(--bg)}
+  .tela{height:1080px;display:flex;flex-direction:column;padding:28.08px 57.6px 17.28px;gap:21.6px}
+
+  /* Cabeçalho */
+  .cab{display:flex;align-items:center;gap:38.4px}
+  .cab img{height:81px;min-height:52px}
+  .cab .tit{flex:1}
+  .cab h1{font-size:clamp(20px,40.32px,40px);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+  .cab .sub{font-size:clamp(12px,19.2px,18px);color:var(--muted);margin-top:3.24px}
+  .selo{font-size:clamp(12px,18.24px,17px);font-weight:700;padding:7.56px 21.12px;border-radius:999px;background:rgba(232,75,138,.15);color:var(--pink2);border:1px solid rgba(232,75,138,.35);white-space:nowrap}
+  .selo.ult{background:var(--pink);color:#fff;border-color:var(--pink)}
+  .selo.fim{background:#1b2030;color:var(--muted);border-color:var(--line)}
+  .hoje-box{display:flex;flex-direction:column;align-items:flex-end;gap:7.56px}
+  .hoje-data{font-size:clamp(14px,24px,24px);font-weight:700;color:var(--txt);white-space:nowrap}
+  .hoje-data small{display:block;text-align:right;font-size:.62em;color:var(--muted);font-weight:600;letter-spacing:.04em}
+
+  /* Total da equipe */
+  .equipe{display:grid;grid-template-columns:1.3fr repeat(5,1fr);gap:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:21.6px 30.72px}
+  .eq-total .lbl{font-size:clamp(11px,16.32px,15px);color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+  .eq-total .val{font-size:clamp(30px,59.52px,58px);font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap;line-height:1.1;margin:4.32px 0 9.72px}
+  .eq-total .val .rs{font-size:.45em;color:var(--pink);font-weight:700;vertical-align:.55em;margin-right:.15em}
+  .barra{position:relative;height:clamp(10px,15.12px,16px);background:var(--track);border-radius:999px}
+  .barra .fill{position:absolute;inset:0 auto 0 0;border-radius:999px}
+  .barra .ideal{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ideal);border-radius:2px}
+  .tile{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:15.12px 17.28px;display:flex;flex-direction:column;justify-content:center;gap:5.4px;min-width:0}
+  .tile span{font-size:clamp(10px,14.98px,14px);color:var(--muted);white-space:nowrap}
+  .tile b{font-size:clamp(14px,23.42px,23px);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile small{font-size:clamp(10px,13.82px,13px);color:var(--muted);white-space:nowrap}
+
+  /* Tabela de vendedores */
+  .quadro{flex:1;min-height:0;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15.12px 26.88px;display:flex;flex-direction:column}
+  .quadro-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8.64px}
+  .quadro-top h2{font-size:clamp(12px,18.24px,17px);color:var(--muted);letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+  .quadro-top .nota{font-size:.78em;letter-spacing:0;text-transform:none;font-weight:400;color:var(--faint);margin-left:10px}
+  .quadro-top .pag{font-size:clamp(11px,16.32px,15px);color:var(--muted);display:flex;align-items:center;gap:10px}
+  .dots{display:inline-flex;gap:5px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots i.on{background:var(--pink)}
+  .grade{display:grid;grid-template-columns:3.2em minmax(0,2.1fr) 1.2fr 1.1fr 1.9fr 1.1fr 1.5fr .7fr 1.05fr;column-gap:21.12px;align-items:center}
+  .th{font-size:clamp(10px,13.82px,13px);color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:6.48px 0;border-bottom:1px solid var(--line)}
+  .th.n,.td.n{text-align:right}
+  .corpo{flex:1;min-height:0;overflow:hidden;transition:opacity .35s ease}
+  .corpo.saindo{opacity:0}
+  .linha{border-bottom:1px solid rgba(35,40,56,.6)}
+  .td{font-size:clamp(11px,17.66px,18px);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .td.pos{color:var(--muted);font-weight:700}
+  .td.nome{font-weight:600}
+  .td.vend{font-weight:800}
+  .td.falta{color:var(--warn)} .td.falta.zero{color:var(--ok)}
+  .ating{display:flex;align-items:center;gap:11.52px}
+  .ating .barra{flex:1;height:clamp(7px,10.8px,11px)}
+  .ating b{font-size:clamp(11px,16.9px,16px);width:4.4em;text-align:right}
+  .posit{display:flex;align-items:center;gap:9.6px}
+  .posit .barra{flex:1;height:clamp(5px,7.56px,8px)}
+  .posit b{font-size:clamp(11px,16.9px,16px)}
+  .chip{display:inline-block;font-size:clamp(10px,14.4px,14px);font-weight:700;padding:3.24px 11.52px;border-radius:999px;white-space:nowrap}
+  .chip.ok{background:rgba(31,191,143,.15);color:var(--ok)}
+  .chip.ritmo{background:rgba(79,124,255,.15);color:#8fa9ff}
+  .chip.abaixo{background:rgba(240,165,58,.15);color:var(--warn)}
+  .chip.sem{background:#1b2030;color:var(--muted)}
+  /* Quem já bateu a meta: faixa compacta embaixo */
+  .batidos{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10.8px 23.04px;display:flex;align-items:center;gap:23.04px}
+  .bt-tit{font-size:clamp(11px,15.74px,15px);color:var(--ok);font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+  .bt-tit b{color:var(--muted);font-weight:600;margin-left:4px}
+  .bt-lista{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+  .bt{display:inline-flex;align-items:baseline;gap:8px;background:rgba(31,191,143,.08);border:1px solid rgba(31,191,143,.28);border-radius:999px;padding:4.86px 15.36px;font-size:clamp(11px,15.36px,15px);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .bt b{font-weight:700}.bt span{color:var(--muted)}.bt i{font-style:normal;color:var(--ok);font-weight:700}
+  [hidden]{display:none!important}
+  .btn-cheia{position:fixed;right:8px;bottom:4px;z-index:70;background:transparent;color:#8b93a7;border:1px solid #232838;border-radius:7px;padding:3px 8px;font:600 11px "Segoe UI",system-ui,Roboto,sans-serif;cursor:pointer;opacity:.6}
+  .btn-cheia:hover,.btn-cheia:focus-visible{opacity:1;color:#f2f4f8}
+  .btn-cheia[hidden]{display:none}
+  body.sem-cursor, body.sem-cursor *{cursor:none!important}
+  .aviso-ex{background:#f0a53a;color:#1a1204;font-weight:800;text-align:center;border-radius:10px;padding:8.64px 19.2px;font-size:clamp(12px,19.2px,18px)}
+
+  /* Detalhe do vendedor (só quando o index.html é aberto no navegador; no papel de parede não abre) */
+  body.clicavel .linha, body.clicavel .bt{cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+  body.clicavel .linha:hover{background:rgba(255,255,255,.035)}
+  body.clicavel .bt:hover{border-color:var(--ok)}
+  .fundo-det{position:fixed;inset:0;background:rgba(5,6,10,.72);display:flex;align-items:center;justify-content:center;z-index:10;padding:32.4px 57.6px}
+  .det{width:min(860px,100%);max-height:1015.2px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32.4px 46.08px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .det-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .det-top h3{font-size:clamp(20px,34.56px,32px);font-weight:800}
+  .det-top .rk{font-size:clamp(11px,16.32px,15px);color:var(--muted);margin-top:4px}
+  .fechar{background:#1b2030;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font:600 14px "Segoe UI",system-ui,sans-serif;cursor:pointer}
+  .fechar:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+  .det-val{font-size:clamp(28px,53.76px,50px);font-weight:800;font-variant-numeric:tabular-nums;margin:21.6px 0 10.8px}
+  .det-val small{font-size:.4em;color:var(--muted);font-weight:600;margin-left:10px}
+  .det .barra{height:14px}
+  .det-cab{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+  .det-cab .det-val{font-size:clamp(24px,42.24px,40px);white-space:nowrap}
+  .det-hoje{max-width:52%;background:rgba(79,124,255,.12);border:1px solid rgba(79,124,255,.35);border-radius:14px;padding:12.96px 23.04px;margin-bottom:10.8px;text-align:right}
+  .det-hoje span{display:block;font-size:clamp(10px,14.4px,13px);color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+  .det-hoje b{display:block;font-size:clamp(20px,34.56px,32px);font-weight:800;font-variant-numeric:tabular-nums}
+  .det-hoje small{font-size:clamp(10px,13.82px,13px);color:var(--muted)}
+  .det-lin{display:flex;justify-content:space-between;font-size:clamp(11px,16.32px,15px);color:var(--muted);margin-top:8px}
+  .det-lin b{color:var(--txt)}
+  .det-grade{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:23.76px}
+  .det-grade .tile b{font-size:clamp(14px,20.16px,20px);overflow:visible}
+  .det-grade .tile small,.det-grade .tile span{white-space:normal}
+  .det-sec{font-size:clamp(11px,15.36px,14px);color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:28.08px}
+  @media (max-width:900px){.det-grade{grid-template-columns:1fr 1fr}}
+  .rodape{font-size:clamp(9px,11.9px,11px);color:var(--faint);letter-spacing:.04em;text-align:center}
+  .erro{color:#ff7b7b}
+  @media (prefers-reduced-motion: reduce){.corpo{transition:none}}
+
+  /* Palco fixo 1920x1080: a tela inteira é ampliada/reduzida junto, sem reorganizar (igual em TV, PC ou celular) */
+  #palco{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;
+    background:radial-gradient(1100px 520px at 50% 0%, rgba(232,75,138,.13) 0%, transparent 65%),var(--bg)}
+  #palco .tela{height:100%}
+  /* Celular em pé: pede para deitar (a tela foi feita para ficar deitada, como na TV) */
+  #girar{position:fixed;inset:0;z-index:50;background:var(--bg);color:var(--txt);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;font:600 18px "Segoe UI",system-ui,sans-serif}
+  #girar .ic{font-size:54px;animation:gira 2s ease-in-out infinite}
+  #girar small{color:var(--muted);font-weight:400;font-size:14px}
+  @keyframes gira{0%,20%{transform:rotate(0)}50%,70%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+  @media (orientation:portrait) and (max-width:900px){#girar{display:flex}}
+</style>
+</head>
+<body>
+<button class="btn-cheia" id="btnCheia" type="button" hidden>⛶ Tela cheia</button>
+<div id="girar"><div class="ic">📱</div>Gire o celular para deitado<small>O Fechamento ocupa a tela inteira na horizontal</small></div>
+<div id="palco">
+<div class="tela">
+  <div class="cab">
+    <img src="logo.png" alt="Grupo Freedom">
+    <div class="tit"><h1 id="titulo">Vendas do mês</h1><div class="sub" id="sub">—</div></div>
+    <div class="hoje-box">
+      <div class="hoje-data" id="hojeData">—</div>
+      <div class="selo" id="selo">—</div>
+    </div>
+  </div>
+
+  <div class="equipe">
+    <div class="eq-total">
+      <div class="lbl">Vendas da equipe no mês</div>
+      <div class="val" id="eqVal">—</div>
+      <div class="barra"><div class="fill" id="eqFill"></div><div class="ideal" id="eqIdeal"></div></div>
+    </div>
+    <div class="tile"><span>Meta do mês</span><b id="eqMeta">—</b><small id="eqPct">—</small></div>
+    <div class="tile"><span>Falta para a meta</span><b id="eqFalta">—</b><small id="eqDia">—</small></div>
+    <div class="tile"><span>Positivação</span><b id="eqPos">—</b><small id="eqPosPct">—</small></div>
+    <div class="tile"><span>Pedidos</span><b id="eqPed">—</b><small id="eqTkt">—</small></div>
+    <div class="tile"><span>Bateram a meta</span><b id="eqBat">—</b><small id="eqBatSub">—</small></div>
+  </div>
+
+  <div class="quadro">
+    <div class="quadro-top"><h2>Ainda não bateram a meta</h2><div class="pag" id="pag"></div></div>
+    <div class="grade">
+      <div class="th">#</div><div class="th">Vendedor</div><div class="th n">Vendido</div><div class="th n">Meta</div>
+      <div class="th">Atingido</div><div class="th n">Falta</div><div class="th">Positivação</div><div class="th n">Pedidos</div><div class="th">Situação</div>
+    </div>
+    <div class="corpo" id="corpo"></div>
+  </div>
+
+  <div class="batidos" id="batidos" hidden>
+    <div class="bt-tit">✓ Já bateram a meta <b id="batN"></b></div>
+    <div class="bt-lista" id="batLista"></div>
+  </div>
+
+    <div class="aviso-ex" id="avisoExemplo" hidden>DADOS DE EXEMPLO (valores de mentira) · rode o CONFIGURAR.bat desta pasta para puxar os números do site</div>
+  <div class="rodape" id="rodape">carregando…</div>
+</div>
+
+
+<div class="fundo-det" id="fundoDet" hidden>
+  <div class="det" role="dialog" aria-modal="true" aria-labelledby="detNome">
+    <div class="det-top"><div><h3 id="detNome">—</h3><div class="rk" id="detRk"></div></div><button class="fechar" id="detFechar" type="button">Fechar ✕</button></div>
+    <div id="detCorpo"></div>
+  </div>
+</div>
+</div>
+<script src="config.js"></script>
+<script src="login.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const brl = v => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // meta costuma ser redonda: mostra sem os centavos quando forem ,00
+  const brlM = v => Number(v) % 1 === 0 ? Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : brl(v);
+  const pct = v => Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+  // Meta da equipe digitada à mão, por mês (ano-mês). Vale só para o mês escrito;
+  // nos outros meses a tela usa a meta que vem do site.
+  const META_EQUIPE_MANUAL = { '2026-09': 3000000 };
+
+  // Donos: ficam fora da tabela, mas continuam somados no total da equipe (que vem direto do site)
+  const FORA_DA_LISTA = [];   // nomes extras para tirar da lista (Anthony e Lucas já saem por serem DIRETORIA)
+  const norm = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^SUPERVISOR\s*-\s*/i, '').trim().toUpperCase();
+  // Supervisores ("SUPERVISOR - NOME" ou "SUP. NOME") também ficam fora da tabela, mas somados no total
+  const ehSupervisor = v => /^\s*(SUPERVISOR|SUPERVISORA|SUP|DIRETORIA|DIRETOR|DIRETORA)\b/i.test(String(v.nome));
+  const ehDono = v => FORA_DA_LISTA.includes(norm(v.nome));
+  const naLista = v => !ehDono(v) && !ehSupervisor(v);
+
+  let LISTA = [], IDEAL = 0, PAG = 0, POR_PAG = 10, COM_META_POS = false;
+
+  function render(){
+    const d = window.DADOS_FECHAMENTO; if (!d) return;
+    $('avisoExemplo').hidden = !d.exemplo;
+    const e = d.equipe, du = e.dias_uteis;
+    IDEAL = du.total ? du.decorridos / du.total : e.progresso_ideal / 100;
+    atualizarDia();
+
+    // Total da equipe
+    const chaveMes = d.periodo.ano + '-' + String(d.periodo.mes).padStart(2, '0');
+    if (META_EQUIPE_MANUAL[chaveMes]) e.meta = META_EQUIPE_MANUAL[chaveMes];
+    const p = e.meta ? e.faturamento / e.meta : 0, bom = e.faturamento >= e.meta * IDEAL;
+    const [r, c] = brl(e.faturamento).replace('R$', '').trim().split(/(?=,)/);
+    $('eqVal').innerHTML = `<span class="rs">R$</span>${r}${c || ''}`;
+    $('eqFill').style.width = Math.min(100, p * 100) + '%';
+    $('eqFill').style.background = p >= 1 ? 'var(--ok)' : bom ? 'var(--blue)' : 'linear-gradient(90deg,#b8336b,var(--pink) 60%,var(--pink2))';
+    $('eqIdeal').style.left = `calc(${Math.min(100, IDEAL * 100)}% - 1px)`;
+    const falta = Math.max(0, e.meta - e.faturamento);
+    $('eqMeta').textContent = brlM(e.meta);
+    $('eqPct').textContent = `${pct(p * 100)} atingido`;
+    $('eqFalta').textContent = falta > 0 ? brl(falta) : 'Meta batida!';
+    $('eqFalta').style.color = falta > 0 ? 'var(--warn)' : 'var(--ok)';
+    $('eqDia').textContent = falta > 0 && du.restantes > 0 ? `${brl(falta / du.restantes)} por dia útil` : (falta > 0 ? 'último dia' : `${pct((p - 1) * 100)} acima da meta`);
+    $('eqPos').textContent = `${e.positivados} / ${e.meta_positivacao}`;
+    $('eqPosPct').textContent = e.meta_positivacao ? `${pct(e.positivados / e.meta_positivacao * 100)} dos clientes` : '';
+    $('eqPed').textContent = e.pedidos == null ? '—' : e.pedidos.toLocaleString('pt-BR');
+    $('eqTkt').textContent = e.ticket_medio == null ? '' : `ticket médio ${brl(e.ticket_medio)}`;
+    const comMeta = d.vendedores.filter(naLista).filter(v => v.meta), bateram = comMeta.filter(v => v.valor >= v.meta);
+    $('eqBat').textContent = `${bateram.length} de ${comMeta.length}`;
+    $('eqBatSub').textContent = 'vendedores com meta';
+
+    // Tabela: só quem tem meta e ainda não bateu. Quem já bateu vai para a faixa pequena embaixo.
+    const doTime = d.vendedores.filter(naLista);
+    TODOS = doTime.filter(v => v.meta);
+    const donos = d.vendedores.filter(ehDono).length, sups = d.vendedores.filter(v => !ehDono(v) && ehSupervisor(v)).length, semMeta = doTime.filter(v => !v.meta).length;
+    LISTA = comMeta.filter(v => v.valor < v.meta).sort((a, b) => b.valor - a.valor);
+    const bat = bateram.slice().sort((a, b) => b.valor - a.valor);
+    $('batidos').hidden = bat.length === 0;
+    $('batN').textContent = bat.length;
+    $('batLista').innerHTML = bat.map(v => `<span class="bt" data-nome="${esc(v.nome)}"><b>${esc(String(v.nome).replace('SUPERVISOR - ', 'SUP. '))}</b><span>${brl(v.valor)}</span><i>${pct(v.valor / v.meta * 100)}</i></span>`).join('');
+
+    COM_META_POS = !!d.positivacao_com_meta;
+    mostrar(false);
+
+    const h = new Date(d.atualizado_em);
+    $('rodape').textContent = `Última atualização: ${h.toLocaleTimeString('pt-BR')} · ${h.toLocaleDateString('pt-BR')} · atualiza a cada 1 min`;
+  }
+
+  // Quantas linhas cabem na tabela (depende do tamanho da tela)
+  function calcularPorPagina(){
+    const corpo = $('corpo');
+    const alt = corpo.clientHeight, linha = Math.max(30, 1080 * 0.041);
+    POR_PAG = Math.max(4, Math.floor(alt / linha));
+    return linha;
+  }
+
+  function linhaHtml(v, i, alt){
+    const temMeta = !!v.meta, pv = temMeta ? v.valor / v.meta : 0, idealV = (v.meta || 0) * IDEAL;
+    const falta = temMeta ? Math.max(0, v.meta - v.valor) : null;
+    const cor = !temMeta ? 'var(--faint)' : pv >= 1 ? 'var(--ok)' : v.valor >= idealV ? 'var(--blue)' : 'var(--warn)';
+    const chip = !temMeta ? '<span class="chip sem">Sem meta</span>' : pv >= 1 ? '<span class="chip ok">✓ Bateu</span>' :
+                 v.valor >= idealV ? '<span class="chip ritmo">No ritmo</span>' : '<span class="chip abaixo">Abaixo</span>';
+    const pPos = v.meta_pos && v.pos != null ? v.pos / v.meta_pos : null;
+    const posit = v.pos == null ? '<div class="posit"><b>—</b></div>' : COM_META_POS && v.meta_pos
+      ? `<div class="posit"><b>${v.pos}/${v.meta_pos}</b><div class="barra"><div class="fill" style="width:${Math.min(100, pPos * 100)}%;background:${pPos >= 1 ? 'var(--ok)' : 'var(--blue)'}"></div></div></div>`
+      : `<div class="posit"><b>${v.pos}</b><small style="color:var(--muted);font-size:.8em">clientes</small></div>`;
+    return `<div class="grade linha" data-nome="${esc(v.nome)}" style="height:${alt}px">
+      <div class="td pos">${i + 1}º</div>
+      <div class="td nome">${esc(String(v.nome).replace('SUPERVISOR - ', 'SUP. '))}</div>
+      <div class="td n vend">${brl(v.valor)}</div>
+      <div class="td n">${temMeta ? brlM(v.meta) : '—'}</div>
+      <div class="td"><div class="ating"><div class="barra"><div class="fill" style="width:${Math.min(100, Math.max(1.5, pv * 100))}%;background:${cor}"></div>${temMeta ? `<div class="ideal" style="left:calc(${Math.min(100, IDEAL * 100)}% - 1px)"></div>` : ''}</div><b>${temMeta ? pct(pv * 100) : '—'}</b></div></div>
+      <div class="td n falta${falta === 0 ? ' zero' : ''}">${falta === null ? '—' : falta > 0 ? brl(falta) : 'batida'}</div>
+      <div class="td">${posit}</div>
+      <div class="td n">${v.pedidos == null ? '—' : v.pedidos}</div>
+      <div class="td">${chip}</div>
+    </div>`;
+  }
+
+  function mostrar(animar){
+    let alt = calcularPorPagina();
+    // Se todo mundo cabe numa página só, as linhas crescem para ocupar o quadro
+    if (LISTA.length && LISTA.length <= POR_PAG) alt = Math.min(Math.floor($('corpo').clientHeight / LISTA.length), Math.round(alt * 1.5));
+    const pags = Math.max(1, Math.ceil(LISTA.length / POR_PAG));
+    if (PAG >= pags) PAG = 0;
+    const ini = PAG * POR_PAG, vs = LISTA.slice(ini, ini + POR_PAG);
+    $('pag').innerHTML = pags > 1
+      ? `${ini + 1}–${ini + vs.length} de ${LISTA.length} <span class="dots">${Array.from({ length: pags }, (_, k) => `<i class="${k === PAG ? 'on' : ''}"></i>`).join('')}</span>`
+      : (LISTA.length ? `${LISTA.length} ${LISTA.length === 1 ? 'vendedor' : 'vendedores'}` : '');
+    const html = vs.length ? vs.map((v, j) => linhaHtml(v, ini + j, alt)).join('')
+      : '<div style="padding:43px 0;text-align:center;color:var(--ok);font-size:24px;font-weight:700">Todos os vendedores com meta já bateram!</div>';
+    const el = $('corpo');
+    if (animar) { el.classList.add('saindo'); setTimeout(() => { el.innerHTML = html; el.classList.remove('saindo'); }, 350); }
+    else el.innerHTML = html;
+  }
+  // O fundo de tela não é clicável: se não couber todo mundo, as páginas trocam sozinhas a cada 10 segundos
+  setInterval(() => { if (LISTA.length > POR_PAG && !DET_ABERTO) { PAG++; mostrar(true); } }, 10000);
+
+
+  // ----- Detalhe do vendedor: só no navegador. No Lively (papel de parede) não tem clique. -----
+  const NO_FUNDO = false;
+  let TODOS = [], DET_ABERTO = false;
+  if (!NO_FUNDO) document.body.classList.add('clicavel');
+  function abrirDetalhe(nome){
+    const v = TODOS.find(x => x.nome === nome); if (!v) return;
+    const d = window.DADOS_FECHAMENTO, e = d.equipe;
+    const ranking = TODOS.slice().sort((a, b) => b.valor - a.valor), pos = ranking.indexOf(v) + 1;
+    const temMeta = !!v.meta, pv = temMeta ? v.valor / v.meta : 0, idealV = (v.meta || 0) * IDEAL;
+    const falta = temMeta ? Math.max(0, v.meta - v.valor) : null;
+    const cor = !temMeta ? 'var(--faint)' : pv >= 1 ? 'var(--ok)' : v.valor >= idealV ? 'var(--blue)' : 'var(--warn)';
+    const situacao = !temMeta ? 'Sem meta cadastrada' : pv >= 1 ? '✓ Bateu a meta' : v.valor >= idealV ? 'No ritmo' : 'Abaixo do ritmo';
+    const ticket = v.ticket != null ? v.ticket : (v.pedidos ? v.valor / v.pedidos : null);
+    const part = e.faturamento ? v.valor / e.faturamento : 0;
+    const pPos = v.meta_pos ? v.pos / v.meta_pos : null;
+    // caixinha sem dado ("—") não aparece, para o detalhe não ficar com espaços em branco
+    const tile = (rot, val, sub, c) => (val === '—' || val === '' || val == null) ? '' : `<div class="tile"><span>${rot}</span><b${c ? ` style="color:${c}"` : ''}>${val}</b>${sub ? `<small>${sub}</small>` : ''}</div>`;
+    $('detNome').textContent = String(v.nome).replace('SUPERVISOR - ', 'SUP. ');
+    $('detRk').textContent = `${pos}º em vendas no mês · ${situacao}`;
+    const du = e.dias_uteis, media = du.decorridos ? v.valor / du.decorridos : null;
+    const proj = v.projecao != null ? v.projecao : (media != null ? media * du.total : null);
+    const tktEq = e.ticket_medio || null;
+    const dia = (v.diario || []).filter(x => x[1] > 0);
+    const melhor = dia.reduce((m, x) => (!m || x[1] > m[1]) ? x : m, null);
+    const dataBR = s => s ? s.slice(8, 10) + '/' + s.slice(5, 7) : '—';
+    // Vendido hoje: pega o dia de hoje no gráfico dia a dia do vendedor
+    const hojeIso = d.periodo.hoje || new Date().toISOString().slice(0, 10);
+    const reg = (v.diario || []).find(x => x[0] === hojeIso);
+    const hojeV = reg ? reg[1] : ((v.diario || []).length ? 0 : null);
+    // Meta de hoje ACUMULADA: o que faltava no começo do dia ÷ dias úteis que sobram (contando hoje).
+    // O que não foi vendido nos dias anteriores vai se somando; no último dia é tudo o que falta.
+    const diasComHoje = du.restantes + 1;
+    const faltavaNoDia = temMeta ? Math.max(0, v.meta - (v.valor - (hojeV || 0))) : null;
+    const metaHoje = temMeta ? faltavaNoDia / diasComHoje : null;
+    const faltaHoje = metaHoje != null ? Math.max(0, metaHoje - (hojeV || 0)) : null;
+    $('detCorpo').innerHTML = `
+      <div class="det-cab">
+        <div class="det-val">${brl(v.valor)}<small>${temMeta ? pct(pv * 100) + ' da meta' : 'sem meta'}</small></div>
+        ${hojeV == null && metaHoje == null ? '' : `<div class="det-hoje"><span>Vendido hoje · ${dataBR(hojeIso)}</span><b>${hojeV == null ? '—' : brl(hojeV)}</b><small>${metaHoje == null ? '' : metaHoje <= 0 ? 'meta do mês já batida' : `meta de hoje ${brl(metaHoje)}${hojeV != null ? (faltaHoje > 0 ? ` · faltam ${brl(faltaHoje)}` : ' · ✓ batida') : ''}`}</small></div>`}
+      </div>
+      ${temMeta ? `<div class="barra"><div class="fill" style="width:${Math.min(100, pv * 100)}%;background:${cor}"></div><div class="ideal" style="left:calc(${Math.min(100, IDEAL * 100)}% - 1px)"></div></div>
+      <div class="det-lin"><span>Meta <b>${brlM(v.meta)}</b></span><span>Ideal hoje <b>${brl(idealV)}</b></span><span>${falta > 0 ? `Falta <b style="color:var(--warn)">${brl(falta)}</b>` : '<b style="color:var(--ok)">Meta batida!</b>'}</span></div>` : ''}
+      ${grafDia(v, du)}
+      <div class="det-grade">
+        ${tile('Média por dia útil', media == null ? '—' : brl(media), `${du.decorridos} de ${du.total} dias úteis`)}
+        ${tile('Projeção do mês', proj == null ? '—' : brl(proj), temMeta && proj != null ? `${pct(proj / v.meta * 100)} da meta` : '', temMeta && proj != null ? (proj >= v.meta ? 'var(--ok)' : 'var(--warn)') : null)}
+        ${tile(falta > 0 ? (diasComHoje > 1 ? 'Meta de hoje (acumulada)' : 'Meta de hoje') : 'Acima da meta', falta > 0 ? brl(metaHoje != null ? metaHoje : falta) : (temMeta ? brl(v.valor - v.meta) : '—'), falta > 0 ? (diasComHoje > 1 ? `inclui o que ficou dos dias anteriores · ${diasComHoje} dias úteis contando hoje` : 'último dia: tudo o que ficou para trás') + (hojeV ? ` · já vendeu ${brl(hojeV)} hoje` : '') : '', falta > 0 ? 'var(--warn)' : 'var(--ok)')}
+        ${tile('Clientes positivados', v.pos == null ? '—' : v.pos, v.meta_pos ? `meta ${v.meta_pos}` : '')}
+        ${tile('Da meta de positivação', pPos == null ? '—' : pct(pPos * 100), pPos != null && pPos < 1 ? `faltam ${v.meta_pos - v.pos} clientes` : (pPos != null ? 'meta batida' : ''), pPos == null ? null : pPos >= 1 ? 'var(--ok)' : 'var(--warn)')}
+        ${tile('Clientes na carteira', v.carteira == null ? '—' : v.carteira, v.carteira && v.pos != null ? `${pct(v.pos / v.carteira * 100)} compraram no mês` : '')}
+        ${tile('Pedidos', v.pedidos == null ? '—' : v.pedidos, v.pedidos && du.decorridos ? `${(v.pedidos / du.decorridos).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} por dia útil` : '')}
+        ${tile('Ticket médio', ticket == null ? '—' : brl(ticket), ticket != null && tktEq ? `equipe ${brl(tktEq)}` : '', ticket != null && tktEq ? (ticket >= tktEq ? 'var(--ok)' : null) : null)}
+        ${tile('Participação na equipe', pct(part * 100), 'do total vendido')}
+        ${tile('Última venda', dataBR(v.ultima_venda), v.dias_sem_venda == null ? '' : v.dias_sem_venda === 0 ? 'hoje' : v.dias_sem_venda === 1 ? 'há 1 dia' : `há ${v.dias_sem_venda} dias`, v.dias_sem_venda >= 3 ? 'var(--warn)' : null)}
+        ${tile('Melhor dia', melhor ? brl(melhor[1]) : '—', melhor ? dataBR(melhor[0]) : '')}
+        ${tile('Dias com venda', v.diario && v.diario.length ? dia.length : '—', v.diario && v.diario.length ? `de ${du.decorridos} dias úteis` : '')}
+      </div>`;
+    $('fundoDet').hidden = false; DET_ABERTO = true; $('detFechar').focus();
+    // Em TV/tela de toque: se ninguém mexer por 1 minuto, o detalhe fecha sozinho e volta para a tela geral
+    clearTimeout(window.__fecharDet); window.__fecharDet = setTimeout(fecharDetalhe, 60000);
+  }
+
+  // Meta de cada dia ACUMULADA: no começo de cada dia útil, o que falta para a meta ÷ dias úteis que sobram (contando o dia).
+  // Assim o que não foi vendido num dia vai sendo somado nos próximos. Dia útil = dia em que o ideal do site sobe.
+  function metasDiarias(v, du){
+    const dd = v.diario || []; if (!v.meta || !dd.length) return null;
+    const temIdeal = dd.some(x => x.length > 2 && x[2] > 0);   // sem ideal do site: usa segunda a sexta
+    let ant = 0, acum = 0;
+    const uteis = dd.map(x => {
+      let util;
+      if (temIdeal) { util = x[2] > ant + 0.001; ant = x[2]; }
+      else { const w = new Date(x[0] + 'T12:00:00').getDay(); util = w >= 1 && w <= 5; }
+      return util;
+    });
+    const T = du.total || uteis.filter(Boolean).length;
+    let usados = 0;
+    return dd.map((x, i) => {
+      let m = null;
+      if (uteis[i]) { const sobram = Math.max(1, T - usados); m = Math.max(0, v.meta - acum) / sobram; usados++; }
+      acum += x[1];
+      return m;
+    });
+  }
+
+  // Gráfico de barras: TODOS os dias em que ele vendeu (dias sem venda não aparecem), com o valor em cima,
+  // o dia embaixo e o traço da meta daquele dia (acumulada)
+  function grafDia(v, du){
+    const todos = v.diario || [], metasT = metasDiarias(v, du) || [];
+    const dias = todos.map((x, i) => ({ d: x[0], v: x[1], m: metasT[i] })).filter(x => x.v > 0);
+    if (!dias.length) return '';
+    const W = 760, H = 150, topo = 16, base = 20, n = dias.length;
+    const max = Math.max(...dias.map(x => x.v), ...dias.map(x => x.m || 0)) || 1;
+    const bw = W / n;
+    const y = val => H - base - (val / max) * (H - base - topo);
+    const curto = val => val >= 1e6 ? (val / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + 'mi' : val >= 1e3 ? (val / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + 'k' : Math.round(val);
+    let s = '';
+    dias.forEach((x, i) => {
+      const cx = i * bw, cor = x.m == null ? 'var(--faint)' : x.v >= x.m ? 'var(--ok)' : 'var(--blue)';
+      s += `<rect x="${cx + 3}" y="${y(x.v)}" width="${Math.max(2, bw - 6)}" height="${Math.max(1, H - base - y(x.v))}" rx="3" fill="${cor}"><title>Vendas do mês · Freedom</title></rect>`;
+      if (x.m != null) s += `<line x1="${cx + 1}" x2="${cx + bw - 1}" y1="${y(x.m)}" y2="${y(x.m)}" stroke="var(--ideal)" stroke-width="2"/>`;
+      s += `<text x="${cx + bw / 2}" y="${Math.min(y(x.v), x.m != null ? y(x.m) : H) - 4}" fill="var(--muted)" font-size="${n > 20 ? 8 : 10}" text-anchor="middle">${curto(x.v)}</text>`;
+      s += `<text x="${cx + bw / 2}" y="${H - 5}" fill="var(--faint)" font-size="10" text-anchor="middle">${x.d.slice(8,10)}/${x.d.slice(5,7)}</text>`;
+    });
+    return `<div class="det-sec">Dias com venda <span style="text-transform:none;letter-spacing:0;font-weight:400">· ${n} dias · traço claro = meta daquele dia (soma o que ficou para trás) · verde = bateu a meta do dia</span></div><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;margin-top:8px;display:block">${s}</svg>`;
+  }
+
+  const idealDiaV = v => { const du = window.DADOS_FECHAMENTO.equipe.dias_uteis; return v.meta && du.total ? v.meta / du.total : null; };
+  function fecharDetalhe(){ $('fundoDet').hidden = true; DET_ABERTO = false; clearTimeout(window.__fecharDet); }
+  if (!NO_FUNDO) {
+    document.addEventListener('click', ev => {
+      const alvo = ev.target.closest('[data-nome]');
+      if (alvo && !DET_ABERTO) { abrirDetalhe(alvo.getAttribute('data-nome')); return; }
+      if (ev.target.id === 'fundoDet' || ev.target.id === 'detFechar') fecharDetalhe();
+    });
+    document.addEventListener('keydown', ev => { if (ev.key === 'Escape') fecharDetalhe(); });
+  }
+
+
+  // Data de hoje e situação do mês (muda sozinha: a tela redesenha a cada 30 s e o relógio é o da própria TV/PC)
+  const SEMANA = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  function atualizarDia(){
+    const d = window.DADOS_FECHAMENTO; if (!d) return;
+    const du = d.equipe.dias_uteis, agora = new Date();
+    $('hojeData').textContent = `${SEMANA[agora.getDay()]}, ${agora.getDate()} de ${MESES[agora.getMonth()]}`;
+    const diaUtilHoje = agora.getDay() >= 1 && agora.getDay() <= 5;
+    let txt, cls = 'selo';
+    if (du.restantes <= 0 && diaUtilHoje) { txt = `Último dia útil do mês · ${du.total} de ${du.total}`; cls += ' ult'; }
+    else if (du.restantes <= 0) { txt = 'Dias úteis do mês encerrados'; cls += ' fim'; }
+    else if (du.restantes === 1) { txt = `Penúltimo dia útil do mês · ${du.decorridos} de ${du.total}`; cls += ' ult'; }
+    else txt = `Dia útil ${du.decorridos} de ${du.total} · faltam ${du.restantes}`;
+    $('selo').textContent = txt; $('selo').className = cls;
+    // Título: nome do mês nos dias normais; no último dia útil vira "Fechamento do mês"
+    const nomeMes = MESES[d.periodo.mes - 1], Mes = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+    const fechando = du.restantes <= 0;
+    $('titulo').textContent = fechando ? 'Fechamento do mês' : Mes;
+    $('sub').textContent = (fechando ? `${Mes} de ${d.periodo.ano}` : `Vendas do mês · ${d.periodo.ano}`) + (d.gestor ? ` · ${d.gestor}` : '');
+    document.title = (fechando ? 'Fechamento do mês' : Mes) + ' · Freedom';
+  }
+  setInterval(atualizarDia, 30 * 1000);
+
+  // Botão "Tela cheia" (só no navegador; some sozinho quando já está em tela cheia)
+  (function(){
+    const b = $('btnCheia'), el = document.documentElement;
+    const pode = !NO_FUNDO;
+    const cheia = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const mostrar = () => { b.hidden = !pode || cheia(); };
+    b.addEventListener('click', () => {
+      const f = el.requestFullscreen || el.webkitRequestFullscreen;
+      const avisar = () => { b.textContent = 'use o menu do navegador › tela cheia'; setTimeout(() => { b.textContent = '⛶ Tela cheia'; }, 6000); };
+      if (!f) return avisar();
+      try { const r = f.call(el); if (r && r.catch) r.catch(avisar); } catch (e) { avisar(); }
+    });
+    document.addEventListener('fullscreenchange', mostrar); document.addEventListener('webkitfullscreenchange', mostrar);
+    window.addEventListener('resize', mostrar); mostrar();
+    // Esconde a setinha do mouse depois de 3 s parada (na TV só aparece o painel)
+    let t; const acorda = () => { document.body.classList.remove('sem-cursor'); clearTimeout(t); t = setTimeout(() => document.body.classList.add('sem-cursor'), 3000); };
+    ['mousemove', 'pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, acorda)); acorda();
+  })();
+
+  // Busca os números na função do Supabase (com o login guardado nesta TV)
+  async function carregar(){
+    try {
+      const j = await TV.buscar('fechamento', carregar);
+      window.DADOS_FECHAMENTO = j;
+      render();
+      if (j.aviso) $('rodape').innerHTML += ' · <span class="erro">' + esc(j.aviso) + '</span>';
+    } catch (e) {
+      if (/faça o login/.test(e.message)) { $('rodape').textContent = 'Faça o login para ver o painel'; return; }
+      $('rodape').innerHTML = (window.DADOS_FECHAMENTO ? esc($('rodape').textContent) + ' · ' : '') + '<span class="erro">' + esc('Não consegui atualizar: ' + e.message) + '</span>';
+    }
+  }
+  // Encaixa o palco na tela INTEIRA, sem sobrar borda: a base é 1920x1080 e o lado que sobrar
+  // (tela mais quadrada, mais comprida, celular deitado...) vira espaço a mais para a tabela.
+  function encaixar(){
+    const W = innerWidth, H = innerHeight, esc = Math.min(W / 1920, H / 1080);
+    const p = document.getElementById('palco');
+    p.style.width = (W / esc) + 'px'; p.style.height = (H / esc) + 'px';
+    p.style.transform = `scale(${esc})`;
+  }
+  window.addEventListener('resize', () => { encaixar(); if (window.DADOS_FECHAMENTO) mostrar(false); });
+  // No celular: ao entrar em tela cheia, tenta travar deitado
+  document.addEventListener('fullscreenchange', () => { try { if (document.fullscreenElement) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} });
+  encaixar();
+  carregar();
+  setInterval(carregar, 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) carregar(); });
+</script>
+</body>
+</html>
