@@ -34,12 +34,12 @@
     if (document.getElementById('tvLogin')) return;
     var d = document.createElement('div');
     d.id = 'tvLogin';
-    d.innerHTML = '<form autocomplete="on"><img src="logo.png" alt="Freedom"><h1>Entrar na TV</h1>' +
-      '<p>Use o e-mail e a senha do site relatorios.cbfreedom.com.br.<br>É preciso fazer só uma vez nesta TV.</p>' +
+    d.innerHTML = '<form autocomplete="on"><img src="logo.png" alt="Freedom"><h1>Entrar</h1>' +
+      '<p>Use o e-mail e a senha do site relatorios.cbfreedom.com.br.<br>É preciso fazer só uma vez neste aparelho.</p>' +
       '<label for="tvEmail">E-MAIL</label><input id="tvEmail" type="email" autocomplete="username" autocapitalize="none" spellcheck="false">' +
       '<label for="tvSenha">SENHA</label><input id="tvSenha" type="password" autocomplete="current-password">' +
       '<button type="submit" id="tvBtn">Entrar</button><div class="erro" id="tvErro"></div>' +
-      '<div class="rod">O login fica guardado só neste navegador da TV.<br>Dica: use um login de gestor que só veja os painéis.</div></form>';
+      '<div class="rod">O login fica guardado só neste navegador.<br>Dica: use um login de gestor que só veja os painéis.</div></form>';
     document.body.appendChild(d);
     d.querySelector('form').onsubmit = function (ev) {
       ev.preventDefault();
