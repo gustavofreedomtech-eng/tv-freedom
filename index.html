@@ -196,7 +196,7 @@
   const META_EQUIPE_MANUAL = { '2026-09': 3000000 };
 
   // Donos: ficam fora da tabela, mas continuam somados no total da equipe (que vem direto do site)
-  const FORA_DA_LISTA = [];   // nomes extras para tirar da lista (Anthony e Lucas já saem por serem DIRETORIA)
+  const FORA_DA_LISTA = ['ANTHONY', 'ANTONY', 'LUCAS'];   // diretoria (nome exato: "LUCAS RODRIGUES" continua aparecendo)
   const norm = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^SUPERVISOR\s*-\s*/i, '').trim().toUpperCase();
   // Supervisores ("SUPERVISOR - NOME" ou "SUP. NOME") também ficam fora da tabela, mas somados no total
   const ehSupervisor = v => /^\s*(SUPERVISOR|SUPERVISORA|SUP|DIRETORIA|DIRETOR|DIRETORA)\b/i.test(String(v.nome));

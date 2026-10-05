@@ -162,7 +162,7 @@
   const SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   let DADOS = null;
   // Donos e supervisores não aparecem na lista de vendedores (continuam somados no total, que vem do site)
-  const FORA_DA_LISTA = [];   // nomes extras para tirar da lista (Anthony e Lucas já saem por serem DIRETORIA)
+  const FORA_DA_LISTA = ['ANTHONY', 'ANTONY', 'LUCAS'];   // diretoria (nome exato: "LUCAS RODRIGUES" continua aparecendo)
   const norm = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^SUPERVISOR\s*-\s*/i, '').trim().toUpperCase();
   const naLista = v => !FORA_DA_LISTA.includes(norm(v.nome)) && !/^\s*(SUPERVISOR|SUPERVISORA|SUP|DIRETORIA|DIRETOR|DIRETORA)\b/i.test(String(v.nome));
 
